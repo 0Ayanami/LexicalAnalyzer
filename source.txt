@@ -1,0 +1,4 @@
+//abuidai
+void main() {
+    puts("Hello, SysY!");
+}
