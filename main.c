@@ -128,6 +128,34 @@ int main() {
                 cat(C);
                 get_char();
             }
+            //在读到小数点时继续往后读数字
+            if (C == '.') {
+                cat(C);
+                get_char();
+                //小数点后必须要有数字，如果不是数字则报错
+                if (!digit(C))
+                    token[0] = '\0';
+                while (digit(C)) {
+                    cat(C);
+                    get_char();
+                }
+            }
+            //在读到指数部分时继续往后读数字
+            if (C == 'E' || C == 'e') {
+                cat(C);
+                get_char();
+                //判断是否有正负号
+                if (C == '+' || C == '-') {
+                    cat(C);
+                    get_char();
+                }
+                if (!digit(C))
+                    token[0] = '\0';
+                while (digit(C)) {
+                    cat(C);
+                    get_char();
+                }
+            }
             //while循环在读到 数字开头+字母 时报错
             if (letter(C)) {
                 token[0] = '\0';

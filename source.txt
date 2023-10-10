@@ -2,5 +2,6 @@
 ui
 dai*/
 void main() {
+    float f = 3.14;
     puts("Hello, SysY!");
 }
