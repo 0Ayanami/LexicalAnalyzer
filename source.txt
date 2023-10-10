@@ -1,4 +1,6 @@
-//abuidai
+/*ab
+ui
+dai*/
 void main() {
     puts("Hello, SysY!");
 }
