@@ -12,21 +12,26 @@ char C; //字符变量，存放当前读入的字符
 int pos = 0; //字符串的位置指针
 int lines = 1; //统计行数
 int words = 0; //统计单词个数,标点和空格不计为单词
-int chars = 0; //统计字符个数
+int keys = 0; //统计关键字个数
+int flags = 0;//统计标识符个数
+int dig = 0;//统计常数个数
+int ass = 0;//统计赋值个数
+int ope = 0;//统计运算符个数
+int sep = 0;//统计分隔符个数
+int flag = 0;//用于判断读取的内容是否为注释
 
 char get_char()//每调用一次就从infile中读取一个字符，并把它放入变量C中
 {
     C = fgetc(infile);
     if (C == EOF)
         printf("\n 词法分析已完成,分析结果记录在 out.txt\n\n");
-    chars++;
     return C;
 }
 
 void get_nbc()//每次调用时，检查C中的字符是否为空格，若是则反复调用get_char()直至非空
 {
     while (C == ' ' || C == '\t' || C == '\b' || C == '\n') {
-        if (C == '\n')
+        if (C == '\n' && !flag)
             lines++;
         get_char();
     }
@@ -53,9 +58,8 @@ int digit(char C) //判断C中的字符是否为数字
 
 int bound(char C) //判断C中的字符是否为分界符
 {
-    if (C == '.' || C == '{' || C == '}' || C == '[' || C == ']' || C == '(' || C == ')' || C == ',' ||
-        C == ';' ||
-        C == '#' || C == '\'' || C == '\"' || C == '\?' || C == ':')
+    if (C == '{' || C == '}' || C == '[' || C == ']' || C == '(' || C == ')' ||
+        C == ';')
         return 1;
     else return 0;
 }
@@ -96,7 +100,7 @@ int IsKey(char token[]) //判断token中是否为关键字
         return 1;
     else if (strcmp(token, "string") == 0)
         return 1;
-    else if (strcmp(token, "new") == 0)
+    else if (strcmp(token, "float") == 0)
         return 1;
     else if (strcmp(token, "delete") == 0)
         return 1;
@@ -165,12 +169,13 @@ int main() {
             }
             token[pos++] = '\0';
             if (token[0] != '\0')
-                fprintf(outfile, "%s      数字\n", token);
+                fprintf(outfile, "%s常数\n", token);
+            dig++;
             words++;
             get_nbc();
         }
 
-        //识别关键字、标识符
+            //识别关键字、标识符
         else if (letter(C)) {
             pos = 0;
             while (letter(C) || digit(C) || C == '_') {
@@ -178,10 +183,13 @@ int main() {
                 get_char();
             }
             token[pos++] = '\0';
-            if (IsKey(token) == 1)
-                fprintf(outfile, "%s      关键字\n", token);
-            else fprintf(outfile, "%s      标识符\n", token);
-
+            if (IsKey(token) == 1) {
+                fprintf(outfile, "%s关键字\n", token);
+                keys++;
+            } else {
+                fprintf(outfile, "%s标识符\n", token);
+                flags++;
+            }
             words++;
             get_nbc();
         }
@@ -195,14 +203,24 @@ int main() {
             if (C == '+' || C == '=') {
                 cat(C);
                 token[pos++] = '\0';
-                fprintf(outfile, "%s      运算符\n", token);
+                if (C == '=') {
+                    fprintf(outfile, "%s赋值\n", token);
+                    ass++;
+                } else {
+                    fprintf(outfile, "%s运算符\n", token);
+                    ope++;
+                }
+                words++;
                 get_char();
                 get_nbc();
             } else {
                 token[pos++] = '\0';
-                fprintf(outfile, "%s      运算符\n", token);
+                fprintf(outfile, "%s运算符\n", token);
+                ope++;
+                words++;
                 get_nbc();
             }
+
         } else if (C == '-') //-,--,-=
         {
             pos = 0;
@@ -211,16 +229,28 @@ int main() {
             if (C == '-' || C == '=') {
                 cat(C);
                 token[pos++] = '\0';
-                fprintf(outfile, "%s      运算符\n", token);
+                if (C == '=') {
+                    fprintf(outfile, "%s赋值\n", token);
+                    ass++;
+
+                } else {
+                    fprintf(outfile, "%s运算符\n", token);
+                    ope++;
+
+                }
+                words++;
                 get_char();
                 get_nbc();
             } else {
                 token[pos++] = '\0';
-                fprintf(outfile, "%s      运算符\n", token);
+                fprintf(outfile, "%s运算符\n", token);
+                ope++;
+                words++;
                 get_nbc();
             }
+
         } else if (C == '*' || C == '%' || C == '!' || C == '>' || C == '<' ||
-                   C == '=') //*,*=,%,%=!,!=,>,>=,<,<=,=,==
+                   C == '=') //*,*=,%,%=,!,!=,>,>=,<,<=,=,==
         {
             pos = 0;
             cat(C);
@@ -228,14 +258,31 @@ int main() {
             if (C == '=') {
                 cat(C);
                 token[pos++] = '\0';
-                fprintf(outfile, "%s      运算符\n", token);
+                if (token[0] == '*' || token[0] == '%') {
+                    fprintf(outfile, "%s赋值\n", token);
+                    ass++;
+
+                } else {
+                    fprintf(outfile, "%s运算符\n", token);
+                    ope++;
+                }
+                words++;
                 get_char();
                 get_nbc();
             } else {
                 token[pos++] = '\0';
-                fprintf(outfile, "%s      运算符\n", token);
+                if (token[0] == '=') {
+                    fprintf(outfile, "%s赋值\n", token);
+                    ass++;
+
+                } else {
+                    fprintf(outfile, "%s运算符\n", token);
+                    ope++;
+                }
+                words++;
                 get_nbc();
             }
+
         } else if (C == '&') // &&
         {
             pos = 0;
@@ -244,7 +291,9 @@ int main() {
             if (C == '&') {
                 cat(C);
                 token[pos++] = '\0';
-                fprintf(outfile, "%s      运算符\n", token);
+                fprintf(outfile, "%s运算符\n", token);
+                ope++;
+                words++;
                 get_char();
                 get_nbc();
             } else {
@@ -252,6 +301,7 @@ int main() {
                 get_char();
                 get_nbc();
             }
+
         } else if (C == '|') // ||
         {
             pos = 0;
@@ -260,7 +310,9 @@ int main() {
             if (C == '|') {
                 cat(C);
                 token[pos++] = '\0';
-                fprintf(outfile, "%s      运算符\n", token);
+                fprintf(outfile, "%s运算符\n", token);
+                ope++;
+                words++;
                 get_char();
                 get_nbc();
             } else {
@@ -276,24 +328,26 @@ int main() {
             if (C == '=') {
                 cat(C);
                 token[pos++] = '\0';
-                fprintf(outfile, "%s      运算符\n", token);
+                fprintf(outfile, "%s赋值\n", token);
+                ass++;
+                words++;
                 get_char();
                 get_nbc();
             } else if (C == '/') // 处理//型注释
             {
                 cat(C);
                 token[pos++] = '\0';
-                fprintf(outfile, "%s      注释\n", token);
+//                fprintf(outfile, "%s注释\n", token);
 //                Retract();
+                flag = 1;
                 while (C != '\n' && C != EOF) //可能是最后一行所以考虑EOF
                     get_char();
-                get_nbc(
-
-
-                        );
+                get_nbc();
+                flag = 0;
             } else if (C == '*') // 处理/**/型注释
             {
                 cat(C);
+                flag = 1;
                 while (1) {
                     get_char();
                     while (C != '*') //一直循环直到出现*/
@@ -306,18 +360,21 @@ int main() {
                     if (C == '/') {
                         cat(C);
                         token[pos++] = '\0';
-                        fprintf(outfile, "%s      注释\n", token);
+//                        fprintf(outfile, "%s注释\n", token);
 //                        Retract();
                         get_char();
                         get_nbc();
+                        flag = 0;
                         break;
                     }
                 }
 
             } else {
                 token[pos++] = '\0';
-                fprintf(outfile, "%s      运算符\n", token);
+                fprintf(outfile, "%s运算符\n", token);
+                ope++;
                 get_nbc();
+                words++;
             }
         }
 
@@ -326,9 +383,11 @@ int main() {
             pos = 0;
             cat(C);
             token[pos++] = '\0';
-            fprintf(outfile, "%s      分界符\n", token);
+            fprintf(outfile, "%s分隔符\n", token);
+            sep++;
             get_char();
             get_nbc();
+            words++;
         } else {
             fprintf(stderr, "错误：第%d行有非法字符！\n", lines); // 输出错误信息到标准错误流
             get_char();
@@ -337,9 +396,14 @@ int main() {
     }
 
     //打印源程序信息
-    printf("\n共计%d行\n", lines);
-    printf("\n单词个数为%d个(包括关键字、标识符和数字个数)\n", words);
-    printf("\n字符总数为%d个(包括空格、换行、注释中的字符在内的所有字符)\n\n\n", chars - 1); //字符个数需要去掉EOF
+    fprintf(outfile, "%d行\n", lines);
+    fprintf(outfile, "%d个词语\n", words);
+    fprintf(outfile, "%d关键字\n", keys);
+    fprintf(outfile, "%d标识符\n", flags);
+    fprintf(outfile, "%d常数\n", dig);
+    fprintf(outfile, "%d赋值\n", ass);
+    fprintf(outfile, "%d运算符\n", ope);
+    fprintf(outfile, "%d分隔符\n", sep);
     system("pause");
     return 0;
 }
