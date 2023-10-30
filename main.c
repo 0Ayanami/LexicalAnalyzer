@@ -18,21 +18,28 @@ int dig = 0;//统计常数个数
 int ass = 0;//统计赋值个数
 int ope = 0;//统计运算符个数
 int sep = 0;//统计分隔符个数
-int flag = 0;//用于判断读取的内容是否为注释
+int line = 1;//用来记录注释的行数
+int flag = 0;//用来标记当前读取是否在/**/注释中
 
 char get_char()//每调用一次就从infile中读取一个字符，并把它放入变量C中
 {
     C = fgetc(infile);
     if (C == EOF)
+    {
         printf("\n 词法分析已完成,分析结果记录在 out.txt\n\n");
+    }
+
     return C;
 }
 
 void get_nbc()//每次调用时，检查C中的字符是否为空格，若是则反复调用get_char()直至非空
 {
     while (C == ' ' || C == '\t' || C == '\b' || C == '\n') {
-        if (C == '\n' && !flag)
+        if (C == '\n'){
             lines++;
+            if (flag)
+                line++;
+        }
         get_char();
     }
 }
@@ -339,11 +346,10 @@ int main() {
                 token[pos++] = '\0';
 //                fprintf(outfile, "%s注释\n", token);
 //                Retract();
-                flag = 1;
                 while (C != '\n' && C != EOF) //可能是最后一行所以考虑EOF
                     get_char();
                 get_nbc();
-                flag = 0;
+                lines -= line;
             } else if (C == '*') // 处理/**/型注释
             {
                 cat(C);
@@ -358,13 +364,15 @@ int main() {
                     cat(C);
                     get_char();
                     if (C == '/') {
+                        flag = 0;
                         cat(C);
                         token[pos++] = '\0';
 //                        fprintf(outfile, "%s注释\n", token);
 //                        Retract();
+                        lines -= line;
+                        line = 1;
                         get_char();
                         get_nbc();
-                        flag = 0;
                         break;
                     }
                 }
@@ -377,7 +385,6 @@ int main() {
                 words++;
             }
         }
-
             //识别分界符
         else if (bound(C)) {
             pos = 0;
@@ -394,6 +401,7 @@ int main() {
             get_nbc();
         }
     }
+
 
     //打印源程序信息
     fprintf(outfile, "%d行\n", lines);
