@@ -18,8 +18,6 @@ int dig = 0;//统计常数个数
 int ass = 0;//统计赋值个数
 int ope = 0;//统计运算符个数
 int sep = 0;//统计分隔符个数
-int line = 1;//用来记录注释的行数
-int flag = 0;//用来标记当前读取是否在/**/注释中
 
 char get_char()//每调用一次就从infile中读取一个字符，并把它放入变量C中
 {
@@ -34,13 +32,13 @@ char get_char()//每调用一次就从infile中读取一个字符，并把它放入变量C中
 
 void get_nbc()//每次调用时，检查C中的字符是否为空格，若是则反复调用get_char()直至非空
 {
-    while (C == ' ' || C == '\t' || C == '\b' || C == '\n') {
-        if (C == '\n'){
-            lines++;
-            if (flag)
-                line++;
+    if (C != EOF){
+        while (C == ' ' || C == '\t' || C == '\b' || C == '\n') {
+            if (C == '\n'){
+                lines++;
+            }
+            get_char();
         }
-        get_char();
     }
 }
 
@@ -349,32 +347,31 @@ int main() {
                 while (C != '\n' && C != EOF) //可能是最后一行所以考虑EOF
                     get_char();
                 get_nbc();
-                lines -= line;
             } else if (C == '*') // 处理/**/型注释
             {
                 cat(C);
-                flag = 1;
+
                 while (1) {
                     get_char();
-                    while (C != '*') //一直循环直到出现*/
+                    while (1) //一直循环直到出现*/
                     {
                         get_nbc(); //注释也需计算行数
+                        if(C == '*')
+                            break;
                         get_char();
                     }
                     cat(C);
                     get_char();
                     if (C == '/') {
-                        flag = 0;
                         cat(C);
                         token[pos++] = '\0';
 //                        fprintf(outfile, "%s注释\n", token);
 //                        Retract();
-                        lines -= line;
-                        line = 1;
                         get_char();
                         get_nbc();
                         break;
                     }
+
                 }
 
             } else {
