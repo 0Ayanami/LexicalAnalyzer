@@ -408,7 +408,7 @@ int main() {
     fprintf(outfile, "%d常数\n", dig);
     fprintf(outfile, "%d赋值\n", ass);
     fprintf(outfile, "%d运算符\n", ope);
-    fprintf(outfile, "%d分隔符\n", sep);
+    fprintf(outfile, "%d分隔符", sep);
     system("pause");
     return 0;
 }

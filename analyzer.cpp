@@ -1,26 +1,26 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <cstring>
 
 using namespace std;
 
 #define MAX 100
 
 string filename = "";
-std::ifstream infile;
 
-char token[MAX];
-char C;
-int pos = 0;
-int lines = 1;
-int words = 0;
-int keys = 0;
-int flags = 0;
-int dig = 0;
-int ass = 0;
-int ope = 0;
-int sep = 0;
+std::ifstream infile;//文件读取
+
+char token[MAX];//字符数组，存放当前正在识别的单词字符串
+char C;//字符变量，存放当前读入的字符
+int pos = 0;//字符串的位置指针
+int lines = 1;//统计行数
+int words = 0;//统计单词个数,标点和空格不计为单词
+int keys = 0;//统计关键字个数
+int flags = 0;//统计标识符个数
+int dig = 0;//统计常数个数
+int ass = 0;//统计赋值个数
+int ope = 0;//统计运算符个数
+int sep = 0;//统计分隔符个数
 
 string getFilename() {
     if (filename == "") {
@@ -32,7 +32,7 @@ string getFilename() {
     return filename;
 }
 
-char get_char() {
+char get_char() {//每调用一次就从infile中读取一个字符，并把它放入变量C中
     C = infile.get();
 //    if (C == EOF) {
 //        std::cout << "\n 词法分析已完成，分析结果记录在out.txt\n\n";
@@ -40,7 +40,7 @@ char get_char() {
     return C;
 }
 
-void get_nbc() {
+void get_nbc() {//每次调用时，检查C中的字符是否为空格，若是则反复调用get_char()直至非空
     while (C == ' ' || C == '\t' || C == '\b' || C == '\n') {
         if (C == '\n') {
             lines++;
@@ -49,11 +49,11 @@ void get_nbc() {
     }
 }
 
-void cat(char C) {
+void cat(char C) {//将C中的字符连接到token字符串后
     token[pos++] = C;
 }
 
-int letter(char C) {
+int letter(char C) {//判断C中的字符是否为字母
     if ((C >= 'a' && C <= 'z') || (C >= 'A' && C <= 'Z')) {
         return 1;
     } else {
@@ -61,7 +61,7 @@ int letter(char C) {
     }
 }
 
-int digit(char C) {
+int digit(char C) {//判断C中的字符是否为数字
     if (C >= '0' && C <= '9') {
         return 1;
     } else {
@@ -69,7 +69,7 @@ int digit(char C) {
     }
 }
 
-int bound(char C) {
+int bound(char C) {//判断C中的字符是否为分界符
     if (C == '{' || C == '}' || C == '[' || C == ']' || C == '(' || C == ')' || C == ';') {
         return 1;
     } else {
